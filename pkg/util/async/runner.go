@@ -38,6 +38,7 @@ func NewRunner(f ...func(stop chan struct{})) *Runner {
 func (r *Runner) Start() {
 	r.lock.Lock()
 	defer r.lock.Unlock()
+	// A second Start must not launch another copy of each worker loop.
 	if r.stop == nil {
 		c := make(chan struct{})
 		r.stop = &c
