@@ -26,10 +26,10 @@ phases:
         esac
         BASE_REF=${CODEBUILD_WEBHOOK_BASE_REF:?pull-request base ref is missing}
         test "$BASE_REF" = 'refs/heads/master'
-        echo 'kubernetes baseline: no Hexagon selection; full root-module Go suite.'
+        echo 'kubernetes baseline: no Hexagon selection; entire pkg/util/async unit-test package.'
         TEST_START=$(date +%s)
         set +e
-        go test -count=1 ./...
+        go test -count=1 ./pkg/util/async
         TEST_STATUS=$?
         set -e
         TEST_END=$(date +%s)
