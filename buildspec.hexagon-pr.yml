@@ -3,7 +3,7 @@ version: 0.2
 env:
   shell: bash
   variables:
-    GOTOOLCHAIN: auto
+    GOTOOLCHAIN: go1.27.2+auto
     HEXAGON_CI_BINARY_S3: s3://hexagon-ci-demo-029136913161-usw2/bin/6c9ff27/ci-impact-linux-amd64
 
 phases:
@@ -11,11 +11,14 @@ phases:
     runtime-versions:
       golang: 1.24
     commands:
-      - go version
+      - |
+        export GOENV_VERSION="$GOLANG_24_VERSION"
+        go version
   build:
     commands:
       - |
         set -euo pipefail
+        export GOENV_VERSION="$GOLANG_24_VERSION"
         HEAD_SHA=$(git rev-parse HEAD)
         echo "Kubernetes PR head: $HEAD_SHA"
         echo "CodeBuild source: ${CODEBUILD_RESOLVED_SOURCE_VERSION:-unavailable}"
