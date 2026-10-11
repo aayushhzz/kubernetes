@@ -4,7 +4,6 @@ env:
   shell: bash
   variables:
     GOTOOLCHAIN: go1.27.2+auto
-    HEXAGON_CI_BINARY_S3: s3://hexagon-ci-demo-029136913161-usw2/bin/6c9ff27/ci-impact-linux-amd64
 
 phases:
   install:
@@ -20,8 +19,6 @@ phases:
         set -euo pipefail
         export GOENV_VERSION="$GOLANG_24_VERSION"
         HEAD_SHA=$(git rev-parse HEAD)
-        echo "Kubernetes PR head: $HEAD_SHA"
-        echo "CodeBuild source: ${CODEBUILD_RESOLVED_SOURCE_VERSION:-unavailable}"
         test "$HEAD_SHA" = "${CODEBUILD_RESOLVED_SOURCE_VERSION:?source version is missing}"
         case "${CODEBUILD_WEBHOOK_TRIGGER:-}" in
           pr/*) ;;
@@ -29,13 +26,13 @@ phases:
         esac
         BASE_REF=${CODEBUILD_WEBHOOK_BASE_REF:?pull-request base ref is missing}
         test "$BASE_REF" = 'refs/heads/master'
-        git fetch --no-tags origin "$BASE_REF"
-        BASE_SHA=$(git merge-base "$HEAD_SHA" FETCH_HEAD)
-        echo "Kubernetes merge base: $BASE_SHA"
-        git worktree add --detach /tmp/hexagon-kubernetes-pr-base "$BASE_SHA"
-        git diff --no-ext-diff --unified=0 "$BASE_SHA" "$HEAD_SHA" > /tmp/hexagon-kubernetes-pr.diff
-        aws s3 cp "$HEXAGON_CI_BINARY_S3" /tmp/hexagon-ci-impact
-        chmod 700 /tmp/hexagon-ci-impact
-        echo 'Diagnostic strict subset: omitted tests are not proven safe to skip.'
-        /tmp/hexagon-ci-impact --require-strict-subset --base-repository /tmp/hexagon-kubernetes-pr-base --repository "$CODEBUILD_SRC_DIR" --diff /tmp/hexagon-kubernetes-pr.diff
-        echo 'Candidate subset passed. No full-suite phase ran.'
+        echo 'kubernetes baseline: no Hexagon selection; full root-module Go suite.'
+        TEST_START=$(date +%s)
+        set +e
+        go test -count=1 ./...
+        TEST_STATUS=$?
+        set -e
+        TEST_END=$(date +%s)
+        echo "BENCH_TEST_SECONDS=$((TEST_END - TEST_START))"
+        echo "BENCH_TEST_STATUS=$TEST_STATUS"
+        exit "$TEST_STATUS"
